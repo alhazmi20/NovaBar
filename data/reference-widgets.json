@@ -1,0 +1,552 @@
+{
+ "source": "https://lumabar.xyz/widgets",
+ "fetched": "2026-11-22",
+ "count": 109,
+ "widgets": [
+  {
+   "category": "AI",
+   "name": "AI Limits",
+   "description": "Two of your AI plans on one tile (Claude, ChatGPT, Gemini, Grok, Cursor and more), with when each limit resets."
+  },
+  {
+   "category": "AI",
+   "name": "Claude Usage",
+   "description": "Your Claude session limit and when it resets."
+  },
+  {
+   "category": "AI",
+   "name": "Claude Plan Usage",
+   "description": "Session and weekly Claude limits, plus your most-used model."
+  },
+  {
+   "category": "AI",
+   "name": "ChatGPT Usage",
+   "description": "Your ChatGPT plan's Codex limits: the 5-hour and weekly windows."
+  },
+  {
+   "category": "AI",
+   "name": "Gemini Usage",
+   "description": "Gemini CLI quota for Pro and Flash."
+  },
+  {
+   "category": "AI",
+   "name": "Grok Usage",
+   "description": "SuperGrok credit use, from your own sign-in."
+  },
+  {
+   "category": "AI",
+   "name": "DeepSeek Balance",
+   "description": "Your DeepSeek balance, with today's and this week's spend."
+  },
+  {
+   "category": "AI",
+   "name": "GLM Usage",
+   "description": "Z.ai / Zhipu GLM Coding Plan limits."
+  },
+  {
+   "category": "AI",
+   "name": "OpenCode Usage",
+   "description": "OpenCode usage for the current session, from its local history."
+  },
+  {
+   "category": "AI",
+   "name": "OpenCode Plan Usage",
+   "description": "OpenCode tokens this session and this week, and your top model."
+  },
+  {
+   "category": "AI",
+   "name": "Cursor Usage",
+   "description": "Cursor spend and tokens."
+  },
+  {
+   "category": "Productivity",
+   "name": "Day Timeline",
+   "description": "Your whole day on one line: hours by kind of app, focus rounds, meetings, sunrise and sunset."
+  },
+  {
+   "category": "Productivity",
+   "name": "Screen Time",
+   "description": "Today's time in front of the PC, hour by hour, and every app's, by day and by week."
+  },
+  {
+   "category": "Productivity",
+   "name": "Pomodoro",
+   "description": "Focus rounds and breaks you start and skip from the bar."
+  },
+  {
+   "category": "Productivity",
+   "name": "Timer",
+   "description": "A countdown that starts in one click."
+  },
+  {
+   "category": "Productivity",
+   "name": "Stopwatch",
+   "description": "Start, pause and lap from the bar; the card keeps every lap."
+  },
+  {
+   "category": "Productivity",
+   "name": "Todos",
+   "description": "Your next open task with a progress ring; tick it off from the dock."
+  },
+  {
+   "category": "Productivity",
+   "name": "Notes",
+   "description": "Your latest note, one click from editing."
+  },
+  {
+   "category": "Productivity",
+   "name": "Calendar",
+   "description": "Your next event and how soon it starts. Google, Outlook and iCloud events sit next to renewals and payouts."
+  },
+  {
+   "category": "Productivity",
+   "name": "WhatsApp",
+   "description": "Unread WhatsApp messages and who wrote last, read from Windows' own notifications."
+  },
+  {
+   "category": "Productivity",
+   "name": "Currency",
+   "description": "Convert between currencies at current rates."
+  },
+  {
+   "category": "Finance",
+   "name": "Total Revenue",
+   "description": "Every connected store's last 30 days added up, with a monthly goal and its pace."
+  },
+  {
+   "category": "Finance",
+   "name": "Polar",
+   "description": "Net revenue over the last 30 days from Polar."
+  },
+  {
+   "category": "Finance",
+   "name": "Polar Chart",
+   "description": "Your Polar revenue as a 14-day line."
+  },
+  {
+   "category": "Finance",
+   "name": "Stripe",
+   "description": "Net revenue over the last 30 days from Stripe."
+  },
+  {
+   "category": "Finance",
+   "name": "Stripe Chart",
+   "description": "Your Stripe revenue as a line."
+  },
+  {
+   "category": "Finance",
+   "name": "Dodo Payments",
+   "description": "Net revenue from Dodo Payments."
+  },
+  {
+   "category": "Finance",
+   "name": "Dodo Chart",
+   "description": "Your Dodo Payments revenue as a line."
+  },
+  {
+   "category": "Finance",
+   "name": "Shopify",
+   "description": "Your store's net sales over the last 30 days."
+  },
+  {
+   "category": "Finance",
+   "name": "Shopify Chart",
+   "description": "This week's Shopify sales and how they moved, over 14 days."
+  },
+  {
+   "category": "Finance",
+   "name": "Lemon Squeezy",
+   "description": "Revenue after tax and refunds over 30 days."
+  },
+  {
+   "category": "Finance",
+   "name": "Lemon Squeezy Chart",
+   "description": "This week's Lemon Squeezy revenue over a 14-day line."
+  },
+  {
+   "category": "Finance",
+   "name": "Paddle",
+   "description": "What you earned from Paddle transactions over 30 days."
+  },
+  {
+   "category": "Finance",
+   "name": "Paddle Chart",
+   "description": "This week's Paddle revenue over a 14-day line."
+  },
+  {
+   "category": "Finance",
+   "name": "Gumroad",
+   "description": "What you kept from Gumroad sales, after the fee."
+  },
+  {
+   "category": "Finance",
+   "name": "Gumroad Chart",
+   "description": "This week's Gumroad sales over a 14-day line."
+  },
+  {
+   "category": "System",
+   "name": "Top CPU",
+   "description": "The three apps using the most CPU right now; a click opens Task Manager."
+  },
+  {
+   "category": "System",
+   "name": "Top RAM",
+   "description": "The three apps holding the most memory, added up as Task Manager does."
+  },
+  {
+   "category": "System",
+   "name": "Tray",
+   "description": "Your tray icons in a grid, one click away; right-click works as in the taskbar."
+  },
+  {
+   "category": "System",
+   "name": "Language",
+   "description": "The current keyboard layout; click to switch."
+  },
+  {
+   "category": "System",
+   "name": "Temperature",
+   "description": "CPU temperature as a gauge, with CPU and memory load beside it."
+  },
+  {
+   "category": "System",
+   "name": "CPU",
+   "description": "Processor load as a ring."
+  },
+  {
+   "category": "System",
+   "name": "RAM",
+   "description": "Memory in use as a ring."
+  },
+  {
+   "category": "System",
+   "name": "Network",
+   "description": "Download and upload speed with a live chart."
+  },
+  {
+   "category": "System",
+   "name": "Battery",
+   "description": "Charge level as a filling gauge, with the charging state."
+  },
+  {
+   "category": "System",
+   "name": "Battery Ring",
+   "description": "The charge as a ring round the number; a spark runs round it while plugged in."
+  },
+  {
+   "category": "System",
+   "name": "Battery Core",
+   "description": "An energy core with twelve cells lit to the charge."
+  },
+  {
+   "category": "System",
+   "name": "Battery Dots",
+   "description": "A dot-matrix battery: the number and the charge in dots."
+  },
+  {
+   "category": "System",
+   "name": "Battery Gauge",
+   "description": "A car's fuel gauge, E to F, for your battery."
+  },
+  {
+   "category": "System",
+   "name": "Quick Toggles",
+   "description": "Wi-Fi, Bluetooth, mobile hotspot and airplane mode."
+  },
+  {
+   "category": "System",
+   "name": "Brightness",
+   "description": "A slider for the display's brightness."
+  },
+  {
+   "category": "System",
+   "name": "Theme Toggle",
+   "description": "Switch Windows between light and dark mode."
+  },
+  {
+   "category": "System",
+   "name": "Do Not Disturb",
+   "description": "Silence Windows notifications in one click."
+  },
+  {
+   "category": "System",
+   "name": "Notifications",
+   "description": "Open the Notification Center from the dock."
+  },
+  {
+   "category": "System",
+   "name": "Show Desktop",
+   "description": "Hide every window, and bring them back."
+  },
+  {
+   "category": "System",
+   "name": "Keyboard",
+   "description": "The on-screen keyboard, one click away."
+  },
+  {
+   "category": "System",
+   "name": "Month Progress",
+   "description": "How much of the month is behind you."
+  },
+  {
+   "category": "System",
+   "name": "Day Progress",
+   "description": "How much of today is behind you."
+  },
+  {
+   "category": "System",
+   "name": "Year Progress",
+   "description": "The year as a grid of dots, filling up."
+  },
+  {
+   "category": "Media & Audio",
+   "name": "Now Playing",
+   "description": "Cover art, title and full controls for the current track."
+  },
+  {
+   "category": "Media & Audio",
+   "name": "Audio Output",
+   "description": "Volume for your current speakers or headphones."
+  },
+  {
+   "category": "Media & Audio",
+   "name": "Microphone",
+   "description": "A call's two buttons for every app at once: mute your microphone, and mute the sound."
+  },
+  {
+   "category": "Media & Audio",
+   "name": "Now Playing (compact)",
+   "description": "Title, artist and play/pause in a smaller card."
+  },
+  {
+   "category": "Media & Audio",
+   "name": "Now Playing Mini",
+   "description": "One round play button with the track's progress."
+  },
+  {
+   "category": "Media & Audio",
+   "name": "Now Playing Bar",
+   "description": "The track with a progress bar and skip."
+  },
+  {
+   "category": "Analytics",
+   "name": "Search Console",
+   "description": "Clicks from Google Search over the last 28 days and how they changed, from your own sign-in."
+  },
+  {
+   "category": "Analytics",
+   "name": "DataFast Chart",
+   "description": "Your site's daily visitors over 14 days, with the week's total and its change."
+  },
+  {
+   "category": "Analytics",
+   "name": "Plausible",
+   "description": "Visitors this week from Plausible, with the trend."
+  },
+  {
+   "category": "Analytics",
+   "name": "Dub",
+   "description": "Clicks on your Dub links this week."
+  },
+  {
+   "category": "Developer",
+   "name": "Resend",
+   "description": "Emails sent this week and how many were delivered."
+  },
+  {
+   "category": "Developer",
+   "name": "Linear",
+   "description": "Issues assigned to you and what's in progress."
+  },
+  {
+   "category": "Developer",
+   "name": "Supabase",
+   "description": "API requests on your project, and its health."
+  },
+  {
+   "category": "Online & Mail",
+   "name": "Wallpaper Gallery",
+   "description": "Browse and set new wallpapers."
+  },
+  {
+   "category": "Online & Mail",
+   "name": "Gmail",
+   "description": "Unread mail in your inbox."
+  },
+  {
+   "category": "Online & Mail",
+   "name": "GitHub Activity",
+   "description": "Your contribution grid and streak."
+  },
+  {
+   "category": "Online & Mail",
+   "name": "GitHub",
+   "description": "Unread GitHub notifications."
+  },
+  {
+   "category": "Online & Mail",
+   "name": "GitHub Overview",
+   "description": "Notifications, open pull requests and stars."
+  },
+  {
+   "category": "Online & Mail",
+   "name": "LeetCode Stats",
+   "description": "Problems solved and your streak."
+  },
+  {
+   "category": "Social",
+   "name": "X Profile",
+   "description": "Followers on your X account."
+  },
+  {
+   "category": "Social",
+   "name": "TikTok",
+   "description": "Followers on your TikTok profile."
+  },
+  {
+   "category": "Social",
+   "name": "YouTube",
+   "description": "Subscribers on your YouTube channel, via your own API key."
+  },
+  {
+   "category": "Social",
+   "name": "Instagram",
+   "description": "Followers on your Instagram account, with an official token."
+  },
+  {
+   "category": "Apps & Files",
+   "name": "Apps",
+   "description": "Start, your pinned apps and every open window."
+  },
+  {
+   "category": "Apps & Files",
+   "name": "Recently Opened",
+   "description": "The apps and files you used last."
+  },
+  {
+   "category": "Apps & Files",
+   "name": "Recycle Bin",
+   "description": "What the bin holds, and a click to empty it."
+  },
+  {
+   "category": "Apps & Files",
+   "name": "Search",
+   "description": "Search the web, or type a folder path to open it."
+  },
+  {
+   "category": "Apps & Files",
+   "name": "Commands",
+   "description": "Type a word to launch an app or an action."
+  },
+  {
+   "category": "Apps & Files",
+   "name": "Storage",
+   "description": "Free space on your drive, with a usage bar."
+  },
+  {
+   "category": "Apps & Files",
+   "name": "Screenshot Capture",
+   "description": "Capture the screen, a window or a region."
+  },
+  {
+   "category": "Weather",
+   "name": "Weather",
+   "description": "Temperature now, with today's high and low."
+  },
+  {
+   "category": "Weather",
+   "name": "Weather Details",
+   "description": "Wind, rain and the day's range."
+  },
+  {
+   "category": "Weather",
+   "name": "Today & Forecast",
+   "description": "Today next to the next three days."
+  },
+  {
+   "category": "Weather",
+   "name": "Weather Status",
+   "description": "The conditions in words, with your city."
+  },
+  {
+   "category": "Weather",
+   "name": "Hourly",
+   "description": "The next six hours."
+  },
+  {
+   "category": "Weather",
+   "name": "Sunrise & Sunset",
+   "description": "Where the sun is between sunrise and sunset."
+  },
+  {
+   "category": "Stocks",
+   "name": "Stock Chart",
+   "description": "One ticker with its intraday line."
+  },
+  {
+   "category": "Stocks",
+   "name": "Stock Watchlist",
+   "description": "Three tickers at a glance."
+  },
+  {
+   "category": "Stocks",
+   "name": "Crypto",
+   "description": "A coin's price, its change over 24 hours and the day's line, from Binance."
+  },
+  {
+   "category": "Clocks",
+   "name": "Clock",
+   "description": "Large, readable time with its seconds and the date, in 12- or 24-hour format."
+  },
+  {
+   "category": "Clocks",
+   "name": "Flip Clock",
+   "description": "Split-flap digits that turn over every minute."
+  },
+  {
+   "category": "Clocks",
+   "name": "World Clocks",
+   "description": "Three small analog faces for the cities you work with."
+  },
+  {
+   "category": "Clocks",
+   "name": "7 Days",
+   "description": "This week as a strip of days, with today's temperature."
+  },
+  {
+   "category": "Clocks",
+   "name": "World Time",
+   "description": "One more city in big digits, with its offset."
+  },
+  {
+   "category": "Clocks",
+   "name": "Today",
+   "description": "Weekday, date, time and weather in a single tile."
+  },
+  {
+   "category": "Clocks",
+   "name": "Date",
+   "description": "The full date, set large."
+  },
+  {
+   "category": "Clocks",
+   "name": "Day Number",
+   "description": "Today's date as a calendar page."
+  },
+  {
+   "category": "Clocks",
+   "name": "Analog Minimal",
+   "description": "Hands and hour ticks on a dark face, nothing else."
+  },
+  {
+   "category": "Clocks",
+   "name": "Segment Clock",
+   "description": "The time as a seven-segment display, under the weekday and date."
+  },
+  {
+   "category": "Clocks",
+   "name": "Clock & Weather",
+   "description": "Time, date and temperature as three colour blocks in one square tile."
+  }
+ ]
+}

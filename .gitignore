@@ -1,0 +1,9 @@
+# build output
+build/
+dist/
+out/
+*.exe
+*.pdb
+*.rsp
+build.log
+.claude/

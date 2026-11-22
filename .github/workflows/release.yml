@@ -1,0 +1,46 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build NovaBar.exe (csc, C# 5)
+        shell: pwsh
+        run: ./scripts/build-ci.ps1 -Out out
+
+      - name: Package zip
+        shell: pwsh
+        run: |
+          $ver = "v1.0.${{ github.run_number }}"
+          New-Item -ItemType Directory -Force -Path pkg\NovaBar | Out-Null
+          Copy-Item out\NovaBar.exe pkg\NovaBar\
+          Copy-Item README.md pkg\NovaBar\
+          Compress-Archive -Path pkg\NovaBar -DestinationPath "NovaBar-$ver.zip" -Force
+          "VER=$ver" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NovaBar-${{ env.VER }}
+          path: NovaBar-${{ env.VER }}.zip
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$env:VER" "NovaBar-$env:VER.zip" `
+            --repo "${{ github.repository }}" `
+            --target "${{ github.sha }}" `
+            --title "NovaBar $env:VER" `
+            --notes "Automated build of ${{ github.sha }} (run #${{ github.run_number }}). Download the zip, extract it, and run NovaBar.exe."

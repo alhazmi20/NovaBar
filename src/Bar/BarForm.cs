@@ -734,7 +734,7 @@ namespace NovaBar
                     else if (code == BarNative.WTS_SESSION_UNLOCK) { locked = false; barDirty = true; RequestPaint(); }
                     break;
                 case Native.WM_DPICHANGED: base.WndProc(ref msg); BeginInvoke((Action)Relayout); return;
-                case Native.WM_DISPLAYCHANGE: base.WndProc(ref msg); BeginInvoke((Action)(() => { if (Owner) BarApp.SyncMonitors(); Relayout(); })); return;
+                case Native.WM_DISPLAYCHANGE: base.WndProc(ref msg); BeginInvoke((Action)(() => { if (Owner) { if (AppConfig.Current.RemapDisplays()) { SaveConfig(); BarApp.ApplyAll(false); AppConfig.RaiseChanged(); } BarApp.SyncMonitors(); } Relayout(); })); return;
                 case Native.WM_SETTINGCHANGE:
                     base.WndProc(ref msg);
                     if (msg.WParam.ToInt32() == BarNative.SPI_SETWORKAREA)

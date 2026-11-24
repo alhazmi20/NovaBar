@@ -40,6 +40,7 @@ namespace NovaBar
             }
         }
         public static string ConfigFile { get { return Path.Combine(Root, "config.json"); } }
+        public static string PresetsDir { get { var p = Path.Combine(Root, "presets"); Directory.CreateDirectory(p); return p; } }
         public static string StateDir { get { var p = Path.Combine(Root, "state"); Directory.CreateDirectory(p); return p; } }
         public static string CacheDir { get { var p = Path.Combine(Root, "cache"); Directory.CreateDirectory(p); return p; } }
         public static string ExeDir { get { return AppDomain.CurrentDomain.BaseDirectory; } }
@@ -113,11 +114,72 @@ namespace NovaBar
                 {
                     var d = J.ParseObj(File.ReadAllText(Paths.ConfigFile, Encoding.UTF8));
                     if (d != null) c.FromDict(d);
+                    if (c.RemapDisplays()) c.Save();
                 }
                 else c.Widgets = DefaultWidgets();
             }
             catch { c.Widgets = DefaultWidgets(); }
             return c;
+        }
+
+        /// <summary>
+        /// Windows sometimes renumbers displays (\\.\DISPLAY2 -> \\.\DISPLAY17) after a driver reset, sleep/wake or replug.
+        /// Per-display choices are keyed by that name, so we remember each display's bounds and, when a saved name no longer
+        /// exists, move its widgets / size / position to the current display at the same bounds (or, failing that, same size).
+        /// Returns true when the config changed.
+        /// </summary>
+        public bool RemapDisplays()
+        {
+            System.Windows.Forms.Screen[] cur;
+            try { cur = System.Windows.Forms.Screen.AllScreens; } catch { return false; }
+            if (cur == null || cur.Length == 0) return false;
+            Func<System.Drawing.Rectangle, string> key = r => r.X + "," + r.Y + "," + r.Width + "," + r.Height;
+            object ko; Extra.TryGetValue("displays", out ko);
+            var known = ko as Dictionary<string, object> ?? new Dictionary<string, object>();
+            var curNames = new HashSet<string>(cur.Select(x => x.DeviceName), StringComparer.OrdinalIgnoreCase);
+
+            // every display name the config refers to
+            var refd = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var w in Widgets) if (w.Monitors != null) foreach (var m in w.Monitors) refd.Add(m);
+            foreach (var k in Extra.Keys) { int i = k.IndexOf('.'); if (i > 0 && (k.StartsWith("size.") || k.StartsWith("position."))) refd.Add(k.Substring(i + 1)); }
+
+            var claimed = new HashSet<string>(refd.Where(curNames.Contains), StringComparer.OrdinalIgnoreCase);
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var old in refd.Where(n => !curNames.Contains(n)).ToList())
+            {
+                object bo; if (!known.TryGetValue(old, out bo)) continue;
+                var b = J.AsStr(bo); var parts = b.Split(',');
+                // same bounds = same display, even if something was already added to it under the new name
+                var hit = cur.FirstOrDefault(x => !map.ContainsValue(x.DeviceName) && key(x.Bounds) == b);
+                if (hit == null && parts.Length == 4)
+                {
+                    var same = cur.Where(x => !claimed.Contains(x.DeviceName) && x.Bounds.Width + "" == parts[2] && x.Bounds.Height + "" == parts[3]).ToList();
+                    if (same.Count == 1) hit = same[0];
+                }
+                if (hit == null) continue;
+                map[old] = hit.DeviceName; claimed.Add(hit.DeviceName);
+            }
+            bool changed = false;
+            if (map.Count > 0)
+            {
+                foreach (var w in Widgets) if (w.Monitors != null)
+                        for (int i = 0; i < w.Monitors.Count; i++) { string nn; if (map.TryGetValue(w.Monitors[i], out nn)) w.Monitors[i] = nn; }
+                foreach (var kv in map)
+                    foreach (var pre in new[] { "size.", "position." })
+                    {
+                        object v; if (Extra.TryGetValue(pre + kv.Key, out v)) { Extra.Remove(pre + kv.Key); Extra[pre + kv.Value] = v; }
+                    }
+                foreach (var w in Widgets) if (w.Monitors != null) { var dd = w.Monitors.Distinct(StringComparer.OrdinalIgnoreCase).ToList(); w.Monitors.Clear(); w.Monitors.AddRange(dd); }
+                foreach (var old in map.Keys) known.Remove(old);
+                changed = true;
+            }
+            foreach (var x in cur)
+            {
+                var k = key(x.Bounds); object pv;
+                if (!known.TryGetValue(x.DeviceName, out pv) || J.AsStr(pv) != k) { known[x.DeviceName] = k; changed = true; }
+            }
+            Extra["displays"] = known;
+            return changed;
         }
 
         public void Save()
@@ -265,5 +327,69 @@ namespace NovaBar
             try { File.WriteAllText(Path.Combine(Paths.StateDir, Safe(key) + ".json"), J.Stringify(data), Encoding.UTF8); } catch { }
         }
         static string Safe(string k) { foreach (var c in Path.GetInvalidFileNameChars()) k = k.Replace(c, '_'); return k; }
+    }
+
+    /// <summary>
+    /// Layout presets: %APPDATA%\NovaBar\presets\<name>.json. A preset holds the widgets (with their monitors and settings)
+    /// plus the bar look (theme, accent, position, style, size, background) and the per-display size/position choices.
+    /// Plain JSON, so presets can be copied between PCs, backed up or edited by hand.
+    /// </summary>
+    public static class Presets
+    {
+        static readonly string[] LookKeys = { "theme", "accent", "position", "style", "size", "barBackground" };
+        static bool PerDisplay(string k) { return k.StartsWith("size.") || k.StartsWith("position.") || k == "displays"; }
+        static string FileFor(string name)
+        {
+            foreach (var ch in Path.GetInvalidFileNameChars()) name = name.Replace(ch, '_');
+            return Path.Combine(Paths.PresetsDir, name.Trim() + ".json");
+        }
+
+        public static List<string> Names()
+        {
+            try { return Directory.GetFiles(Paths.PresetsDir, "*.json").OrderByDescending(File.GetLastWriteTime).Select(Path.GetFileNameWithoutExtension).ToList(); }
+            catch { return new List<string>(); }
+        }
+
+        public static void Save(string name, AppConfig c)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return;
+            var all = c.ToDict(); var d = new Dictionary<string, object>();
+            d["name"] = name.Trim(); d["saved"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+            foreach (var k in LookKeys) d[k] = all[k];
+            d["widgets"] = all["widgets"];
+            d["extra"] = c.Extra.Where(kv => PerDisplay(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+            File.WriteAllText(FileFor(name), J.Stringify(d, true), Encoding.UTF8);
+        }
+
+        /// <summary>Apply a preset onto c in place (other settings such as accounts, units and city are kept).</summary>
+        public static bool Apply(string name, AppConfig c)
+        {
+            var f = FileFor(name); if (!File.Exists(f)) return false;
+            var p = J.ParseObj(File.ReadAllText(f, Encoding.UTF8)); if (p == null || J.Arr(p, "widgets") == null) return false;
+            var d = c.ToDict();
+            foreach (var k in LookKeys) { object v; if (p.TryGetValue(k, out v) && v != null) d[k] = v; }
+            d["widgets"] = p["widgets"];
+            var ex = new Dictionary<string, object>(c.Extra);
+            foreach (var k in ex.Keys.Where(k => k.StartsWith("size.") || k.StartsWith("position.")).ToList()) ex.Remove(k);
+            var pe = J.Obj(p, "extra");
+            if (pe != null) foreach (var kv in pe)
+                {
+                    if (kv.Key == "displays")
+                    {
+                        // merge: keep what we know about current displays, add the preset's (for remapping its display names)
+                        object cur; var known = (ex.TryGetValue("displays", out cur) ? cur as Dictionary<string, object> : null) ?? new Dictionary<string, object>();
+                        var pk = kv.Value as Dictionary<string, object>;
+                        if (pk != null) foreach (var x in pk) if (!known.ContainsKey(x.Key)) known[x.Key] = x.Value;
+                        ex["displays"] = known;
+                    }
+                    else if (PerDisplay(kv.Key)) ex[kv.Key] = kv.Value;
+                }
+            d["extra"] = ex;
+            c.FromDict(d);
+            c.RemapDisplays();     // preset made before Windows renumbered the screens → move it onto today's names
+            return true;
+        }
+
+        public static void Delete(string name) { try { File.Delete(FileFor(name)); } catch { } }
     }
 }

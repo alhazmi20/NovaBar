@@ -76,9 +76,12 @@ namespace NovaBar
             // toolbar
             float bx = x;
             float pw = g.ButtonWidth("Taskbar preset", Icons.Window);
-            g.Button(new RectangleF(bx, y, pw, g.S(34)), "Taskbar preset", TaskbarPreset, true, Icons.Window); bx += pw + g.S(8);
+            g.Button(new RectangleF(bx, y, pw, g.S(34)), "Taskbar preset", () => { if (Confirm("Replace all your widgets with the taskbar preset?")) TaskbarPreset(); }, true, Icons.Window); bx += pw + g.S(8);
             float rw = g.ButtonWidth("Reset to default", Icons.Refresh);
-            g.Button(new RectangleF(bx, y, rw, g.S(34)), "Reset to default", () => Replace(AppConfig.DefaultWidgets(), "Reset to the default layout"), false, Icons.Refresh); bx += rw + g.S(8);
+            g.Button(new RectangleF(bx, y, rw, g.S(34)), "Reset to default", () => { if (Confirm("Replace all your widgets with the default layout?")) Replace(AppConfig.DefaultWidgets(), "Reset to the default layout"); }, false, Icons.Refresh); bx += rw + g.S(8);
+            float qw = g.ButtonWidth("Presets", Icons.Folder);
+            var qr = new RectangleF(bx, y, qw, g.S(34));
+            g.Button(qr, "Presets", () => PresetMenu(qr), false, Icons.Folder); bx += qw + g.S(8);
             if (undo != null)
             {
                 float uw = g.ButtonWidth("Undo", "");
@@ -459,9 +462,66 @@ namespace NovaBar
             if (selInst == inst.Inst) selInst = null;
             W.EndEdit(); W.Changed();
         }
+        /// <summary>Presets menu: save the current layout to presets\<name>.json, load one, or open the folder.</summary>
+        void PresetMenu(RectangleF r)
+        {
+            var names = Presets.Names();
+            var opts = new List<string> { "Save current layout as preset…" };
+            opts.AddRange(names.Select(n => "Load “" + n + "”"));
+            if (names.Count > 0) opts.Add("Delete a preset…");
+            opts.Add("Open presets folder");
+            W.ShowMenu(r, opts.ToArray(), -1, i =>
+            {
+                if (i == 0)
+                {
+                    var name = AskName("Preset name", names.Count == 0 ? "My layout" : "Layout " + (names.Count + 1));
+                    if (string.IsNullOrWhiteSpace(name)) return;
+                    W.SaveNow();
+                    try { Presets.Save(name, Cfg); W.Toast("Saved preset “" + name.Trim() + "”"); }
+                    catch (Exception ex) { W.Toast("Couldn't save: " + ex.Message); }
+                }
+                else if (i <= names.Count)
+                {
+                    var n = names[i - 1];
+                    if (!Confirm("Load the preset “" + n + "”?")) return;
+                    var before = Cfg.Widgets.ToList();
+                    try { System.IO.File.Copy(Paths.ConfigFile, System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Paths.ConfigFile), "config.backup.json"), true); } catch { }
+                    if (!Presets.Apply(n, Cfg)) { W.Toast("Couldn't read that preset"); return; }
+                    undo = before; undoLabel = "Loaded preset “" + n + "”";
+                    selInst = null; W.EndEdit(); W.Changed(true); W.Toast(undoLabel);
+                }
+                else if (names.Count > 0 && i == names.Count + 1)
+                {
+                    W.ShowMenu(r, names.ToArray(), -1, j =>
+                    {
+                        if (MessageBox.Show("Delete the preset “" + names[j] + "”?", "NovaBar", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+                        { Presets.Delete(names[j]); W.Toast("Deleted “" + names[j] + "”"); }
+                    });
+                }
+                else { try { System.Diagnostics.Process.Start("explorer.exe", "\"" + Paths.PresetsDir + "\""); } catch { } }
+            });
+        }
+        static string AskName(string title, string def)
+        {
+            using (var f = new Form { Text = title, FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterScreen, ClientSize = new Size(360, 96), ShowInTaskbar = false, TopMost = true })
+            {
+                var tb = new TextBox { Text = def, Left = 12, Top = 14, Width = 336 };
+                var ok = new Button { Text = "Save", DialogResult = DialogResult.OK, Left = 192, Top = 54, Width = 74 };
+                var no = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Left = 274, Top = 54, Width = 74 };
+                f.Controls.AddRange(new Control[] { tb, ok, no }); f.AcceptButton = ok; f.CancelButton = no;
+                f.Shown += (s, e) => { tb.SelectAll(); tb.Focus(); };
+                return f.ShowDialog() == DialogResult.OK ? tb.Text : null;
+            }
+        }
+        static bool Confirm(string q)
+        {
+            return MessageBox.Show(q + "\n\nYour current layout (widgets, monitors and their settings) will be replaced. A backup is saved to config.backup.json.",
+                "NovaBar", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes;
+        }
         void Replace(List<WidgetInstance> l, string label)
         {
             undo = Cfg.Widgets.ToList(); undoLabel = label;
+            try { if (System.IO.File.Exists(Paths.ConfigFile)) System.IO.File.Copy(Paths.ConfigFile, System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Paths.ConfigFile), "config.backup.json"), true); } catch { }
             Cfg.Widgets = l.Where(i => WidgetRegistry.Meta(i.Id) != null).ToList();
             selInst = null; W.EndEdit(); W.Changed(); W.Toast(label);
         }

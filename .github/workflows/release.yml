@@ -13,6 +13,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history + tags, for release notes
 
       - name: Build NovaBar.exe (csc, C# 5)
         shell: pwsh
@@ -34,6 +36,30 @@ jobs:
           name: NovaBar-${{ env.VER }}
           path: NovaBar-${{ env.VER }}.zip
 
+      - name: Write release notes
+        shell: pwsh
+        run: |
+          # Notes = every commit since the previous release tag (subject as a heading, body as text).
+          $prev = git describe --tags --abbrev=0 2>$null
+          $range = if ($LASTEXITCODE -eq 0 -and $prev) { "$prev..HEAD" } else { "HEAD" }
+          $sep = "@@END@@"
+          $log = git log $range --no-merges --pretty=format:"%s%n%b$sep"
+          $out = @("## What's new", "")
+          foreach ($c in ($log -join "`n") -split [regex]::Escape($sep)) {
+            $lines = $c.Trim() -split "`n" | Where-Object { $_ -notmatch '^Co-Authored-By:' }
+            if (-not $lines -or -not $lines[0].Trim()) { continue }
+            $out += "### " + $lines[0].Trim()
+            $body = ($lines | Select-Object -Skip 1) -join "`n"
+            if ($body.Trim()) { $out += $body.Trim() }
+            $out += ""
+          }
+          $out += "## Install"
+          $out += "Download **NovaBar-$env:VER.zip**, extract it anywhere and run **NovaBar.exe** (Windows 10/11, nothing else to install)."
+          $out += "To update, quit NovaBar (right-click the bar > Exit), replace NovaBar.exe and start it again. Your settings in %APPDATA%\NovaBar are kept."
+          if ($prev) { $out += ""; $out += "**Full changelog:** https://github.com/${{ github.repository }}/compare/$prev...$env:VER" }
+          $out -join "`n" | Out-File -Encoding utf8 notes.md
+          Get-Content notes.md
+
       - name: Create GitHub release
         shell: pwsh
         env:
@@ -43,4 +69,4 @@ jobs:
             --repo "${{ github.repository }}" `
             --target "${{ github.sha }}" `
             --title "NovaBar $env:VER" `
-            --notes "Automated build of ${{ github.sha }} (run #${{ github.run_number }}). Download the zip, extract it, and run NovaBar.exe."
+            --notes-file notes.md

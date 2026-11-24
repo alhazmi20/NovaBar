@@ -35,7 +35,7 @@ namespace NovaBar
 
         public static float SizeFactor(string size)
         {
-            switch ((size ?? "M").ToUpperInvariant()) { case "S": return 0.85f; case "L": return 1.2f; default: return 1f; }
+            switch ((size ?? "M").ToUpperInvariant()) { case "S": return 0.85f; case "L": return 1.2f; case "XL": return 1.4f; case "XXL": return 1.65f; default: return 1f; }
         }
         public static BarMetrics For(string size, float dpiScale)
         {

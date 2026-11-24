@@ -332,7 +332,7 @@ namespace NovaBar
         string SizeTag(string dev)
         {
             object v; if (Cfg.Extra == null || !Cfg.Extra.TryGetValue("size." + dev, out v)) return null;
-            var sz = J.AsStr(v); return sz == "S" ? "Small" : sz == "M" ? "Medium" : sz == "L" ? "Large" : null;
+            var sz = J.AsStr(v); return sz == "S" ? "Small" : sz == "M" ? "Medium" : sz == "L" ? "Large" : sz == "XL" ? "Extra large" : sz == "XXL" ? "Huge" : null;
         }
         /// <summary>Monitors in the same order the bar uses: primary first.</summary>
         static List<Screen> SetScreens()

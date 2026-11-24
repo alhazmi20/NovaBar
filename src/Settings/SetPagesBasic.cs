@@ -485,7 +485,7 @@ namespace NovaBar
                 g.Segmented(a, new[] { "Overflow button", "Shrink, then overflow", "Hide extras" }, new[] { "button", "shrink", "hide" }, cur, v => { c.Extra["overflow"] = v; W.Changed(); });
             }
             a = g.Row(ref y, x, w, "", "Size", "Default for every display: scales tiles, text and icons");
-            g.Segmented(a, new[] { "Small", "Medium", "Large" }, new[] { "S", "M", "L" }, c.Size, v => { c.Size = v; W.Changed(); });
+            g.Segmented(a, new[] { "Small", "Medium", "Large", "XL", "XXL" }, new[] { "S", "M", "L", "XL", "XXL" }, c.Size, v => { c.Size = v; W.Changed(); });
             {   // per-display override
                 var scrs = new List<Screen> { Screen.PrimaryScreen }; scrs.AddRange(Screen.AllScreens.Where(sc => !sc.Primary));
                 if (scrs.Count > 1)
@@ -494,7 +494,7 @@ namespace NovaBar
                         var dev = scrs[i].DeviceName; object ov;
                         string cur = c.Extra != null && c.Extra.TryGetValue("size." + dev, out ov) ? J.AsStr(ov) : "";
                         a = g.Row(ref y, x, w, "", "Size on Display " + (i + 1), scrs[i].Bounds.Width + "×" + scrs[i].Bounds.Height + (scrs[i].Primary ? "  ·  primary" : ""));
-                        g.Segmented(a, new[] { "Default", "Small", "Medium", "Large" }, new[] { "", "S", "M", "L" }, cur, v => { c.SetSizeFor(dev, v); W.Changed(); });
+                        g.Segmented(a, new[] { "Default", "S", "M", "L", "XL", "XXL" }, new[] { "", "S", "M", "L", "XL", "XXL" }, cur, v => { c.SetSizeFor(dev, v); W.Changed(); });
                     }
             }
             y += g.S(10);

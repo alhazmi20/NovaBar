@@ -54,11 +54,11 @@ namespace NovaBar
                 string dev = bar.Scr.DeviceName, mine = bar.MySize;
                 object ov; bool own = cfg.Extra != null && cfg.Extra.TryGetValue("size." + dev, out ov) && J.AsStr(ov).Length > 0;
                 size.DropDownItems.Add(new ToolStripMenuItem("This display") { Enabled = false });
-                foreach (var sz in new[] { "S", "M", "L" }) { var v = sz; size.DropDownItems.Add(Check(sz == "S" ? "Small" : sz == "M" ? "Medium" : "Large", string.Equals(mine, sz, StringComparison.OrdinalIgnoreCase), () => apply(() => AppConfig.Current.SetSizeFor(dev, v)))); }
+                foreach (var sz in new[] { "S", "M", "L", "XL", "XXL" }) { var v = sz; size.DropDownItems.Add(Check(SizeName(sz), string.Equals(mine, sz, StringComparison.OrdinalIgnoreCase), () => apply(() => AppConfig.Current.SetSizeFor(dev, v)))); }
                 if (own) size.DropDownItems.Add(Item("Use default size", () => apply(() => AppConfig.Current.SetSizeFor(dev, null))));
                 size.DropDownItems.Add(new ToolStripSeparator());
                 size.DropDownItems.Add(new ToolStripMenuItem("Default (all displays)") { Enabled = false });
-                foreach (var sz in new[] { "S", "M", "L" }) { var v = sz; size.DropDownItems.Add(Check(sz == "S" ? "Small" : sz == "M" ? "Medium" : "Large", string.Equals(cfg.Size, sz, StringComparison.OrdinalIgnoreCase), () => apply(() => AppConfig.Current.Size = v))); }
+                foreach (var sz in new[] { "S", "M", "L", "XL", "XXL" }) { var v = sz; size.DropDownItems.Add(Check(SizeName(sz), string.Equals(cfg.Size, sz, StringComparison.OrdinalIgnoreCase), () => apply(() => AppConfig.Current.Size = v))); }
             }
             cms.Items.Add(size);
             cms.Items.Add(new ToolStripSeparator());
@@ -171,6 +171,7 @@ namespace NovaBar
 
         static void Round(IntPtr h) { Native.SetDwm(h, Native.DWMWA_WINDOW_CORNER_PREFERENCE, Native.DWMWCP_ROUND); }
         static ToolStripMenuItem Item(string text, Action a) { var i = new ToolStripMenuItem(text); i.Click += (o, e) => a(); return i; }
+        static string SizeName(string sz) { return sz == "S" ? "Small" : sz == "M" ? "Medium" : sz == "L" ? "Large" : sz == "XL" ? "Extra large" : "Huge"; }
         static ToolStripMenuItem Check(string text, bool on, Action a) { var i = Item(text, a); i.Checked = on; return i; }
         static ToolStripMenuItem Sub(string text, Font f) { return new ToolStripMenuItem(text) { Font = f }; }
     }

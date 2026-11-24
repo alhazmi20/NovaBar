@@ -21,7 +21,7 @@ namespace NovaBar
             Application.SetCompatibleTextRenderingDefault(false);
 
             AppConfig.Current = AppConfig.Load();
-            Theme.Current = Theme.Make(AppConfig.Current.Theme, AppConfig.Current.Accent);
+            Theme.Current = Theme.ForBar(AppConfig.Current);
 
             try
             {

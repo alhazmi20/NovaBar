@@ -172,6 +172,60 @@ namespace NovaBar
         public override string Subtitle { get { return "Theme, accent color and font"; } }
         static readonly string[] order = { "dark", "white", "midnight", "glass", "glasslight" };
         static readonly string[] blurbs = { "Solid, deep black", "Clean and bright", "Deep blue, translucent", "Clear liquid glass over your wallpaper", "Light frosted glass" };
+        static readonly string[] barSwatches = { "#000000", "#1C1C1E", "#2C2C2E", "#0F172A", "#1E3A5F", "#312E81", "#4C1D95", "#831843", "#7F1D1D", "#064E3B", "#E5E7EB", "#FFFFFF" };
+        static readonly string[] barOps = { "", "25", "50", "75", "90", "100" };
+        /// <summary>Bar background colour + opacity (only visible when Dock › Bar background is on).</summary>
+        float PaintBarColor(SetG g, float x, float y, float w)
+        {
+            var c = W.Cfg; object v;
+            string cur = c.Extra.TryGetValue("barColor", out v) && v != null ? J.AsStr(v) : "";
+            string op = c.Extra.TryGetValue("barOpacity", out v) && v != null ? J.AsStr(v) : "";
+            y = g.Section(x, y, w, "Bar background color");
+            float ch = g.S(c.BarBackground || c.IsShell ? 176 : 196);
+            var card = new RectangleF(x, y, w, ch); g.Card(card);
+            Ui.Text(g.G, "The bar behind your widgets. Pick a colour, or keep the theme's own", g.F(12.5f), W.P.Dim, new RectangleF(x + g.S(20), y + g.S(14), w - g.S(40), g.S(20)));
+            float sx = x + g.S(20), sy = y + g.S(46), sd = g.S(32);
+            // "Theme" chip (default)
+            var tr = new RectangleF(sx, sy, g.S(72), sd);
+            bool themeOn = cur == "";
+            Ui.FillRound(g.G, tr, sd / 2, themeOn ? Ui.WithA(W.T.Accent, 60) : W.P.T.Tile);
+            if (themeOn) Ui.StrokeRound(g.G, tr, sd / 2, W.T.Accent, g.S(2));
+            Ui.Text(g.G, "Theme", g.F(12.5f), W.P.Text, tr, 0);
+            g.Hit(tr, () => { c.Extra["barColor"] = ""; W.Changed(); });
+            sx = tr.Right + g.S(12);
+            foreach (var hex in barSwatches)
+            {
+                var col = Theme.Hex(hex, Color.Gray); var sr = new RectangleF(sx, sy, sd, sd);
+                bool on = string.Equals(hex, cur, StringComparison.OrdinalIgnoreCase);
+                Ui.FillRound(g.G, sr, sd / 2, col);
+                Ui.StrokeRound(g.G, sr, sd / 2, on ? W.T.Accent : Ui.WithA(W.P.Text, 40), on ? g.S(3) : g.S(1));
+                var hh = hex; g.Hit(sr, () => { c.Extra["barColor"] = hh; W.Changed(); });
+                sx += sd + g.S(10);
+            }
+            // custom colour: system picker
+            var cr = new RectangleF(sx + g.S(4), sy, g.ButtonWidth("Custom\u2026", Icons.Edit), sd);
+            g.Button(cr, "Custom\u2026", () =>
+            {
+                var start = Theme.Hex(cur, W.T.BarBg);
+                using (var dlg = new System.Windows.Forms.ColorDialog { FullOpen = true, AnyColor = true, Color = Color.FromArgb(255, start) })
+                    if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK) { c.Extra["barColor"] = Theme.ToHex(dlg.Color); W.Changed(); }
+            }, false, Icons.Edit);
+            // opacity
+            var orow = new RectangleF(x + g.S(20), sy + sd + g.S(20), w - g.S(40), g.S(34));
+            Ui.Text(g.G, "Opacity", g.F(13), W.P.Text, new RectangleF(orow.X, orow.Y, g.S(120), orow.Height));
+            var seg = new RectangleF(orow.Right - g.S(380), orow.Y, g.S(380), orow.Height);
+            g.Segmented(seg, new[] { "Theme", "25%", "50%", "75%", "90%", "100%" }, barOps, op, s => { c.Extra["barOpacity"] = s; W.Changed(); });
+            // preview strip
+            var pv = new RectangleF(x + g.S(20), orow.Bottom + g.S(14), w - g.S(40), g.S(26));
+            var bt = Theme.ForBar(c);
+            using (var hb = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.LargeCheckerBoard, Color.FromArgb(70, 128, 128, 128), Color.FromArgb(30, 128, 128, 128)))
+                g.G.FillRectangle(hb, pv);
+            Ui.FillRound(g.G, pv, g.S(8), bt.BarBg);
+            Ui.Text(g.G, Theme.ToHex(Color.FromArgb(255, bt.BarBg)) + "  \u00B7  " + (int)Math.Round(bt.BarBg.A / 2.55) + "%", g.F(11.5f), bt.Dark ? Color.White : Color.Black, pv, 0);
+            if (!(c.BarBackground || c.IsShell))
+                Ui.Text(g.G, "Turn on Dock \u203A Bar background to see it on the bar", g.F(12), W.P.Faint, new RectangleF(x + g.S(20), pv.Bottom + g.S(4), w - g.S(40), g.S(20)));
+            return y + ch + g.S(22);
+        }
         static readonly string[] swatches = { "#7C8CFF", "#0A84FF", "#64D2FF", "#30D158", "#FFD60A", "#FF9F0A", "#FF453A", "#FF375F", "#BF5AF2", "#A2845E" };
         static readonly string[] fonts = { "Segoe UI Variable Text", "Segoe UI Variable Display", "Segoe UI", "Inter", "Aptos", "Bahnschrift", "Calibri", "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Cascadia Code", "Consolas" };
         string hexText;
@@ -318,6 +372,7 @@ namespace NovaBar
                 }, false, Icons.Edit);
             }
             y += ah + g.S(22);
+            y = PaintBarColor(g, x, y, w);
 
             y = g.Section(x, y, w, "Font");
             var a = g.Row(ref y, x, w, "", "Text font", "Used for every widget label and value");

@@ -270,6 +270,15 @@ namespace NovaBar
         {
             if (!TaskbarHidden) return;
             try { foreach (var h in Trays()) if (Native.IsWindowVisible(h)) Native.ShowWindow(h, Native.SW_HIDE); } catch { }
+            // A hidden taskbar that isn't in auto-hide still reserves its 48 px on every screen, and then Explorer ignores our own
+            // appbar strip. Explorer drops auto-hide when it restarts (and sometimes ignores the first request), so keep it set.
+            try
+            {
+                var d = TrayAbd(); if (d.hWnd == IntPtr.Zero) return;
+                int st = (int)Native.SHAppBarMessage(Native.ABM_GETSTATE, ref d);
+                if ((st & Native.ABS_AUTOHIDE) == 0) { var d2 = TrayAbd(); d2.lParam = new IntPtr(Native.ABS_AUTOHIDE); Native.SHAppBarMessage(Native.ABM_SETSTATE, ref d2); }
+            }
+            catch { }
         }
 
         /// <summary>Always safe to call (idempotent). Also recovers from a previous crash via the flag file.</summary>

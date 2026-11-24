@@ -179,8 +179,8 @@ namespace NovaBar
         internal void ApplyConfig(bool fontChanged, bool first)
         {
             var cfg = AppConfig.Current;
-            var nt = Theme.Make(cfg.Theme, cfg.Accent);
-            bool themeChanged = T == null || nt.Id != T.Id || nt.Accent != T.Accent;
+            var nt = Theme.ForBar(cfg);
+            bool themeChanged = T == null || nt.Id != T.Id || nt.Accent != T.Accent || nt.BarBg != T.BarBg;
             T = Theme.Current = nt;
             if (fontChanged) Ui.ResetFonts();
             if (panel != null && (themeChanged || fontChanged)) ClosePanel();
@@ -192,6 +192,7 @@ namespace NovaBar
                 BarShell.SetStartup(cfg.LaunchAtStartup);
             }
             if (cfg.ReserveSpace) AppBarRegister(); else AppBarRemove();
+            if (Owner && cfg.ReserveSpace) ScheduleReserveCheck();
             if (cfg.HideOnFullscreen) { fsTimer.Start(); FsHook(true); } else { fsTimer.Stop(); FsHook(false); if (hiddenFs) ShowFromFullscreen(); }
             Relayout();
         }
@@ -353,6 +354,51 @@ namespace NovaBar
                 };
             }
             reassertTimer.Stop(); reassertTimer.Start();
+        }
+        // ---- self-heal: Explorer sometimes accepts our appbar but never shrinks the work area (its bookkeeping gets stuck while
+        // its own taskbar is hidden). If re-claiming doesn't help, restart Explorer once; the TaskbarCreated handler then
+        // re-registers every bar. Rate-limited so it can never loop.
+        static int lastExplorerRestart = -10 * 60 * 1000 - 1;
+        System.Windows.Forms.Timer reserveCheck; int reserveTries;
+        void ScheduleReserveCheck()
+        {
+            if (reserveCheck == null)
+            {
+                reserveCheck = new System.Windows.Forms.Timer { Interval = 3000 };
+                reserveCheck.Tick += (o, e) =>
+                {
+                    reserveCheck.Stop();
+                    if (closing || !AppConfig.Current.ReserveSpace) return;
+                    var lost = BarApp.Bars.Where(b => !b.IsDisposed && b.appbarReg && !b.hiddenFs && b.ReservationLost()).ToList();
+                    if (lost.Count == 0) { reserveTries = 0; return; }
+                    if (reserveTries++ < 2)
+                    {   // first: re-claim (forces a real ABM_SETPOS) and look again
+                        foreach (var b in lost) { b.lastAbRect = Rectangle.Empty; b.Relayout(); }
+                        reserveCheck.Start(); return;
+                    }
+                    reserveTries = 0;
+                    if (Environment.TickCount - lastExplorerRestart < 10 * 60 * 1000) return;
+                    lastExplorerRestart = Environment.TickCount;
+                    RestartExplorer();
+                };
+            }
+            reserveTries = 0; reserveCheck.Stop(); reserveCheck.Start();
+        }
+        static void RestartExplorer()
+        {
+            try
+            {
+                int sid = Process.GetCurrentProcess().SessionId;
+                foreach (var p in Process.GetProcessesByName("explorer")) { try { if (p.SessionId == sid) p.Kill(); } catch { } }
+                var t = new System.Windows.Forms.Timer { Interval = 2500 };
+                t.Tick += (o, e) =>
+                {   // Windows normally restarts the shell itself; start it if it didn't
+                    t.Stop(); t.Dispose();
+                    try { if (!Process.GetProcessesByName("explorer").Any(p => p.SessionId == sid)) Process.Start("explorer.exe"); } catch { }
+                };
+                t.Start();
+            }
+            catch { }
         }
         void AbLog(string s) { try { System.IO.File.AppendAllText(System.IO.Path.Combine(Paths.Root, "appbar.log"), DateTime.Now.ToString("HH:mm:ss.fff") + " [" + (Scr != null ? Scr.DeviceName : "?") + "] " + s + Environment.NewLine); } catch { } }
         /// <summary>Reserve-space mode: true when this monitor's work area no longer excludes the bar's strip.</summary>
@@ -679,8 +725,7 @@ namespace NovaBar
             bool fs = AppConfig.Current.HideOnFullscreen && BarShell.FullscreenOn(Scr, hwnd, panel != null && panel.IsHandleCreated ? panel.Handle : IntPtr.Zero);
             if (fs && !hiddenFs)
             {
-                hiddenFs = true; ClosePanel(); glass.Hide(); corners.Hide();
-                Native.ShowWindow(hwnd, Native.SW_HIDE); EnsureTicking();
+                HideForFullscreen();
             }
             else if (!fs && hiddenFs) ShowFromFullscreen();
             else if (!hiddenFs && !fromEvent && !MenuOpen())
@@ -712,6 +757,13 @@ namespace NovaBar
             if (found) return true;
             var fg = Native.GetForegroundWindow();
             return Native.WindowClass(fg) == "Chrome_WidgetWin_2";             // Chromium popup menus
+        }
+        /// <summary>Hide the bar AND everything that belongs to it (glass panes behind floating tiles, shell corners, open panel).
+        /// The glass panes are separate topmost windows: forgetting them left empty blurred boxes over fullscreen video.</summary>
+        void HideForFullscreen()
+        {
+            hiddenFs = true; ClosePanel(); glass.Hide(); corners.Hide();
+            Native.ShowWindow(hwnd, Native.SW_HIDE); EnsureTicking();
         }
         void ShowFromFullscreen()
         {
@@ -765,7 +817,7 @@ namespace NovaBar
                 if (n == BarNative.ABN_POSCHANGED) BeginInvoke((Action)Relayout);   // re-claim (SETPOS is skipped when nothing changed)
                 else if (n == BarNative.ABN_FULLSCREENAPP && AppConfig.Current.HideOnFullscreen)
                 {
-                    if (msg.LParam != IntPtr.Zero) { if (!hiddenFs) { hiddenFs = true; ClosePanel(); corners.Hide(); Native.ShowWindow(hwnd, Native.SW_HIDE); EnsureTicking(); } }
+                    if (msg.LParam != IntPtr.Zero) { if (!hiddenFs) HideForFullscreen(); }
                     else CheckFullscreen();
                 }
                 return;

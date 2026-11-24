@@ -56,6 +56,20 @@ namespace NovaBar
         static Color A(int a, int r, int g, int b) { return Color.FromArgb(a, r, g, b); }
         static Color A(int a, Color c) { return Color.FromArgb(a, c.R, c.G, c.B); }
 
+        /// <summary>The bar's own theme: the chosen theme plus the user's bar background colour / opacity (Appearance page).
+        /// Extra["barColor"] = "#RRGGBB" ("" = theme colour), Extra["barOpacity"] = 0..100 ("" = theme's own opacity).</summary>
+        public static Theme ForBar(AppConfig c)
+        {
+            var t = Make(c.Theme, c.Accent);
+            object v; string hex = c.Extra != null && c.Extra.TryGetValue("barColor", out v) && v != null ? J.AsStr(v) : "";
+            int op = -1; if (c.Extra != null && c.Extra.TryGetValue("barOpacity", out v) && v != null) { double d; if (double.TryParse(J.AsStr(v), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out d)) op = (int)Math.Max(0, Math.Min(100, d)); }
+            var col = Hex(hex, Color.Empty);
+            if (col == Color.Empty && op < 0) return t;
+            var baseC = col == Color.Empty ? t.BarBg : col;
+            int a = op >= 0 ? (int)Math.Round(op * 2.55) : (col == Color.Empty ? t.BarBg.A : Math.Max(t.BarBg.A, t.IsGlass ? (int)t.BarBg.A : 255));
+            t.BarBg = Color.FromArgb(a, baseC.R, baseC.G, baseC.B);
+            return t;
+        }
         public static Theme Make(string id, string accentHex)
         {
             var accent = Hex(accentHex, Color.FromArgb(124, 140, 255));

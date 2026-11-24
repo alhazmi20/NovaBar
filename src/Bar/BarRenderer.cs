@@ -241,13 +241,11 @@ namespace NovaBar
             if (AppConfig.Current.IsShell) { if (radius <= 0) g.FillRectangle(Ui.B(t.ShellBg), r); else Ui.FillRound(g, r, radius, t.ShellBg); return; }
             if (radius <= 0)
             {
-                g.FillRectangle(Ui.B(t.BarBg), r);
-                using (var p = new Pen(t.BarBorder, 1f)) g.DrawRectangle(p, r.X, r.Y, r.Width - 1, r.Height - 1);
+                g.FillRectangle(Ui.B(t.BarBg), r);   // no outline: the bar is just its colour
             }
             else
             {
                 Ui.FillRound(g, r, radius, t.BarBg);
-                Ui.StrokeRound(g, r, radius, t.BarBorder, 1f);
             }
         }
 

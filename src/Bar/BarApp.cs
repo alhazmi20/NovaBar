@@ -13,6 +13,7 @@ namespace NovaBar
     {
         static int cleaned;
         static readonly List<BarForm> bars = new List<BarForm>();
+        internal static BarForm[] Bars { get { return bars.ToArray(); } }
         static BarForm owner;
 
         /// <summary>Extra["allMonitors"] (default true): one bar per monitor. false = one bar on AppConfig.Monitor.</summary>

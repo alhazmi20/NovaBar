@@ -307,7 +307,7 @@ namespace NovaBar
             int thick = (Vertical ? (lastVW > 0 ? lastVW : M.Si(200)) : M.Height) + 2 * Margin;
             if (appbarReg) area = AppBarSetPos(mon, Top, thick);
             else area = BarShell.TaskbarHidden ? mon : Scr.WorkingArea;
-            BarShell.ApplyBackdrop(hwnd, T, !AppConfig.Current.IsShell, true);   // rounded corners for pill and full (same size/position)
+            BarShell.ApplyBackdrop(hwnd, T, Pill, true);   // full width: square corners; pill: rounded
             barDirty = true;
             Render();
         }

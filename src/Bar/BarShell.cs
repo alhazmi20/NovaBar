@@ -335,27 +335,41 @@ namespace NovaBar
         }
 
         // ---------------- fullscreen ----------------
-        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "IsZoomed")] static extern bool FsIsZoomed(IntPtr h);
+        [System.Runtime.InteropServices.DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr h, int attr, out int v, int size);
+        /// <summary>Is something fullscreen on THIS monitor? Walks the z-order instead of looking only at the foreground
+        /// window: clicking another monitor moves the focus away, but a fullscreen video stays fullscreen underneath.</summary>
         public static bool FullscreenOn(Screen scr, IntPtr self, IntPtr panel)
         {
             try
             {
-                var fg = Native.GetForegroundWindow();
-                // A normal maximized window (has a caption or resizable frame) is NOT fullscreen, even though with the
-                // taskbar hidden it covers the whole monitor (and Windows may then report QUNS_BUSY). Real fullscreen
-                // (games, F11 browsers, video players) drops the caption/frame.
-                if (fg != IntPtr.Zero && FsIsZoomed(fg) && (Native.GetWindowLong(fg, -16 /*GWL_STYLE*/) & (0x00C00000 /*WS_CAPTION*/ | 0x00040000 /*WS_THICKFRAME*/)) != 0) return false;
-                int st; if (Native.SHQueryUserNotificationState(out st) == 0 && (st == 3 || st == 4)) return true;   // D3D fullscreen / presentation mode
-                if (fg == IntPtr.Zero || fg == self || fg == panel || fg == BarNative.GetDesktopWindow() || fg == BarNative.GetShellWindow()) return false;
-                var cls = Native.WindowClass(fg);
-                if (cls == "WorkerW" || cls == "Progman" || cls == "Shell_TrayWnd" || cls == "Shell_SecondaryTrayWnd") return false;
-                uint fpid; Native.GetWindowThreadProcessId(fg, out fpid);
-                if (fpid == myPid) return false; // our own windows (panels, tray host, menus)
-                Native.RECT r; if (!Native.GetWindowRect(fg, out r)) return false;
                 var b = scr.Bounds;
-                if (!(r.Left <= b.Left && r.Top <= b.Top && r.Right >= b.Right && r.Bottom >= b.Bottom)) return false;
-                // must also be borderless: a captioned/resizable window that merely overhangs the screen isn't fullscreen
-                return (Native.GetWindowLong(fg, -16) & (0x00C00000 | 0x00040000)) == 0;
+                var fg = Native.GetForegroundWindow();
+                int st;   // exclusive D3D fullscreen / presentation mode, reported for the foreground app's monitor
+                if (fg != IntPtr.Zero && Native.SHQueryUserNotificationState(out st) == 0 && (st == 3 || st == 4)
+                    && Screen.FromHandle(fg).Bounds == b) return true;
+                bool result = false;
+                Native.EnumWindows((h, l) =>   // top of the z-order first
+                {
+                    if (!Native.IsWindowVisible(h) || Native.IsIconic(h)) return true;
+                    int cloaked; if (DwmGetWindowAttribute(h, 14 /*DWMWA_CLOAKED*/, out cloaked, 4) == 0 && cloaked != 0) return true;
+                    uint pid; Native.GetWindowThreadProcessId(h, out pid);
+                    if (pid == myPid) return true;                       // the bars, glass panes, panels, menus
+                    var cls = Native.WindowClass(h);
+                    if (cls == "WorkerW" || cls == "Progman") return false;   // reached the desktop: nothing fullscreen
+                    if (cls == "Shell_TrayWnd" || cls == "Shell_SecondaryTrayWnd") return true;
+                    int ex = Native.GetWindowLong(h, Native.GWL_EXSTYLE);
+                    if ((ex & (0x20 /*TRANSPARENT*/ | 0x80 /*TOOLWINDOW*/)) != 0) return true;   // overlays, tooltips, toasts
+                    Native.RECT r; if (!Native.GetWindowRect(h, out r)) return true;
+                    if (r.Right <= b.Left || r.Left >= b.Right || r.Bottom <= b.Top || r.Top >= b.Bottom) return true;   // other monitor
+                    int style = Native.GetWindowLong(h, -16);
+                    bool framed = (style & (0x00C00000 /*CAPTION*/ | 0x00040000 /*THICKFRAME*/)) != 0;
+                    if (!framed && r.Left <= b.Left && r.Top <= b.Top && r.Right >= b.Right && r.Bottom >= b.Bottom) { result = true; return false; }
+                    // A normal app window on top of this monitor (incl. a maximized one, which with the taskbar hidden
+                    // also covers the screen) means nothing fullscreen is showing here. Small borderless popups don't count.
+                    if (framed) return false;
+                    return true;
+                }, IntPtr.Zero);
+                return result;
             }
             catch { return false; }
         }

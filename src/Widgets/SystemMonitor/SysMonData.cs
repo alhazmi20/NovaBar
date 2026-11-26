@@ -460,10 +460,30 @@ namespace NovaBar
         static int webMissAt = -100000, lhmMissAt = -100000, ohmMissAt = -100000, hwiMissAt = -100000;
         static readonly string[] Prefer = { "core (tctl/tdie)", "cpu (tctl/tdie)", "tctl/tdie", "core (tdie)", "cpu package", "package", "tctl", "cpu die", "cpu" };
 
+        /// <summary>LibreHardwareMonitor can crash or be closed; its logon task never restarts it. If it isn't running, start the
+        /// "NovaBar LibreHardwareMonitor" task again (at most every 3 minutes; does nothing when the task isn't installed).</summary>
+        static int relaunchAt = -1000000;
+        static void RelaunchLhm()
+        {
+            if (Environment.TickCount - relaunchAt < 180000) return;
+            relaunchAt = Environment.TickCount;
+            System.Threading.ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    if (System.Diagnostics.Process.GetProcessesByName("LibreHardwareMonitor").Length > 0) return;
+                    var psi = new System.Diagnostics.ProcessStartInfo("schtasks.exe", "/run /tn \"NovaBar LibreHardwareMonitor\"")
+                    { CreateNoWindow = true, UseShellExecute = false, WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden, RedirectStandardOutput = true, RedirectStandardError = true };
+                    using (var pr = System.Diagnostics.Process.Start(psi)) pr.WaitForExit(10000);
+                    webMissAt = Environment.TickCount - 45000;   // look again ~15 s later instead of a full minute
+                }
+                catch { }
+            });
+        }
         public static double Read(out string src)
         {
             src = null; double v;
-            if (Environment.TickCount - webMissAt > 60000) { v = LhmWeb(); if (!double.IsNaN(v)) { src = "LibreHardwareMonitor"; return v; } webMissAt = Environment.TickCount; }
+            if (Environment.TickCount - webMissAt > 60000) { v = LhmWeb(); if (!double.IsNaN(v)) { src = "LibreHardwareMonitor"; return v; } webMissAt = Environment.TickCount; RelaunchLhm(); }
             if (Environment.TickCount - lhmMissAt > 60000) { v = Wmi(@"root\LibreHardwareMonitor"); if (!double.IsNaN(v)) { src = "LibreHardwareMonitor"; return v; } lhmMissAt = Environment.TickCount; }
             if (Environment.TickCount - hwiMissAt > 60000) { v = Hwinfo(); if (!double.IsNaN(v)) { src = "HWiNFO"; return v; } hwiMissAt = Environment.TickCount; }
             if (Environment.TickCount - ohmMissAt > 60000) { v = Wmi(@"root\OpenHardwareMonitor"); if (!double.IsNaN(v)) { src = "OpenHardwareMonitor"; return v; } ohmMissAt = Environment.TickCount; }

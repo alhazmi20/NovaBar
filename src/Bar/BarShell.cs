@@ -361,6 +361,9 @@ namespace NovaBar
                     if ((ex & (0x20 /*TRANSPARENT*/ | 0x80 /*TOOLWINDOW*/)) != 0) return true;   // overlays, tooltips, toasts
                     Native.RECT r; if (!Native.GetWindowRect(h, out r)) return true;
                     if (r.Right <= b.Left || r.Left >= b.Right || r.Bottom <= b.Top || r.Top >= b.Bottom) return true;   // other monitor
+                    // A maximized window on a neighbouring monitor overhangs by its invisible 8px resize border:
+                    // only windows that Windows assigns to THIS monitor count.
+                    if (Screen.FromHandle(h).Bounds != b) return true;
                     int style = Native.GetWindowLong(h, -16);
                     bool framed = (style & (0x00C00000 /*CAPTION*/ | 0x00040000 /*THICKFRAME*/)) != 0;
                     if (!framed && r.Left <= b.Left && r.Top <= b.Top && r.Right >= b.Right && r.Bottom >= b.Bottom) { result = true; return false; }
